@@ -2,7 +2,8 @@
 #include "stdbool.h"
 #include "stdio.h"
 #include "stdlib.h"
-#define TAMANIO 10
+#include "string.h"
+#define TAM 10
 #define NUEVO_TAM 2
 #define DISMUNUIR_TAM 4
 
@@ -13,23 +14,39 @@ struct heap {
     cmp_func_t cmp;
 };
 
+/* ESTA BIEN DECLARAR LA FUNCION ASI? */
+int cmp (const void *a, const void *b) {
+    return strcmp(a,b);
+}
 
 heap_t *heap_crear(cmp_func_t cmp) {
     heap_t* heap = malloc(sizeof(heap_t));
 
     if (!heap) return NULL;
 
-    heap->datos = malloc(TAMANIO * sizeof(void*));
+    heap->datos = malloc(TAM * sizeof(void*));
     
     if (!heap->datos) {
         free(heap);
         return NULL;
     }
 
-    heap->tam = TAMANIO;
+    heap->tam = TAM;
     heap->cant = 0;
     heap->cmp = cmp;
     return heap;
+}
+
+size_t _posiscion_padre(size_t cant) {
+    return (cant - 1) / 2; 
+}
+
+size_t _posiscion_hijo_izquierdo(size_t cant) {
+    return cant * 2 + 1;
+}
+
+size_t _posiscion_hijo_derecho(size_t cant) {
+    return cant * 2 + 2;
 }
 
 size_t heap_cantidad(const heap_t *heap) {
@@ -45,7 +62,7 @@ void *heap_ver_max(const heap_t *heap) {
     return heap->datos[0];
 }
 
-void swap(int *x, int *y) {
+void _swap(int *x, int *y) {
    int k = *x;
    *x = *y;
    *y = k;
@@ -54,11 +71,11 @@ void swap(int *x, int *y) {
 void upheap(void** datos, size_t cant, cmp_func_t cmp) {
     if (cant == 0) return;
 
-    size_t pos = (cant - 1) / 2; 
-    void* padre = datos[pos];
+    size_t pos_padre = _posiscion_padre(cant);
+    void* padre = datos[pos_padre];
     if (cmp(padre, datos[cant]) < 0) {
-        swap(padre, datos[cant]);
-        upheap(datos, pos, cmp); 
+        _swap(padre, datos[cant]);
+        upheap(datos, pos_padre, cmp); 
     }
     return;
 }
@@ -87,19 +104,73 @@ bool heap_encolar(heap_t *heap, void *elem) {
     return true;
 }
 
-void downheap(void** datos, size_t cant, cmp_func_t cmp);
+void downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant) {
+    if (pos_act >= cant) return;
+
+    size_t pos_hijo_izq = _posiscion_hijo_izquierdo(pos_act);
+    size_t pos_hijo_der = _posiscion_hijo_derecho(pos_act);
+
+    size_t pos_mayor = pos_act; // es 0
+    void* padre = datos[pos_mayor];
+
+    if (pos_hijo_izq < cant) {
+        void* hijo_izq = datos[pos_hijo_izq];
+        if (cmp(padre, hijo_izq) < 0) pos_mayor = pos_hijo_izq;
+    }
+
+    if (pos_hijo_der < cant) {
+        void* hijo_der = datos[pos_hijo_der];
+        if (cmp(padre, hijo_der) < 0) pos_mayor = pos_hijo_der;
+    }
+
+    // SI HAY UN SOLO ELEM NO ENTRA ACA
+    if (pos_mayor != pos_act) {
+        _swap(padre, datos[pos_mayor]);
+        downheap(datos, pos_mayor, cmp, cant);
+    }
+}
 
 void *heap_desencolar(heap_t *heap) {
     if (heap_esta_vacio(heap)) return NULL;
 
-    if (heap->tam > TAMANIO && heap->cant * DISMUNUIR_TAM <= heap->tam) {
+    if (heap->tam > TAM && heap->cant * DISMUNUIR_TAM <= heap->tam) {
         size_t nuevo_tam = heap->tam / NUEVO_TAM;
         if (!redimensionar(heap, nuevo_tam)) return NULL;
     }
 
-    swap(heap->datos[0], heap->datos[heap->cant - 1]);
-    void* devolver = heap->datos[heap->cant - 1];
-    downheap(heap->datos, 0, heap->cmp);
+    void* desencolado = heap->datos[0];
     heap->cant--;
-    return devolver;
+
+    if (!heap_esta_vacio(heap)) {
+        _swap(heap->datos[0], heap->datos[heap->cant]);
+        downheap(heap->datos, 0, heap->cmp, heap->cant);
+    }
+    
+    return desencolado;
 }
+
+void heap_destruir(heap_t *heap, void (*destruir_elemento)(void *e)) {
+    while (!heap_esta_vacio(heap)) {
+        if (destruir_elemento) destruir_elemento(heap->datos[heap->cant - 1]);
+        heap->cant--;
+    }
+    free(heap->datos);
+    free(heap);
+}
+
+/* Función de heapsort genérica. Esta función ordena mediante heap_sort
+ * un arreglo de punteros opacos, para lo cual requiere que se
+ * le pase una función de comparación. Modifica el arreglo "in-place".
+ * Nótese que esta función NO es formalmente parte del TAD Heap.
+ */
+void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp);
+
+/*
+ * Constructor alternativo del heap. Además de la función de comparación,
+ * recibe un arreglo de valores con que inicializar el heap. Complejidad
+ * O(n).
+ *
+ * Excepto por la complejidad, es equivalente a crear un heap vacío y encolar
+ * los valores de uno en uno
+*/
+heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp);
