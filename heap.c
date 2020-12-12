@@ -14,11 +14,6 @@ struct heap {
     cmp_func_t cmp;
 };
 
-/* ESTA BIEN DECLARAR LA FUNCION ASI? */
-int cmp (const void *a, const void *b) {
-    return strcmp(a,b);
-}
-
 heap_t *heap_crear(cmp_func_t cmp) {
     heap_t* heap = malloc(sizeof(heap_t));
 
@@ -62,6 +57,7 @@ void *heap_ver_max(const heap_t *heap) {
     return heap->datos[0];
 }
 
+
 void _swap(int *x, int *y) {
    int k = *x;
    *x = *y;
@@ -74,7 +70,9 @@ void upheap(void** datos, size_t cant, cmp_func_t cmp) {
     size_t pos_padre = _posiscion_padre(cant);
     void* padre = datos[pos_padre];
     if (cmp(padre, datos[cant]) < 0) {
-        _swap(padre, datos[cant]);
+        datos[pos_padre] = datos[cant];
+        datos[cant] = padre;
+        //_swap(padre, datos[cant]);
         upheap(datos, pos_padre, cmp); 
     }
     return;
@@ -125,7 +123,11 @@ void downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant) {
 
     // SI HAY UN SOLO ELEM NO ENTRA ACA
     if (pos_mayor != pos_act) {
-        _swap(padre, datos[pos_mayor]);
+        void* dato = datos[pos_mayor];
+        datos[pos_mayor] = padre;
+        padre = dato;
+
+        //_swap(padre, datos[pos_mayor]);
         downheap(datos, pos_mayor, cmp, cant);
     }
 }
@@ -142,10 +144,12 @@ void *heap_desencolar(heap_t *heap) {
     heap->cant--;
 
     if (!heap_esta_vacio(heap)) {
-        _swap(heap->datos[0], heap->datos[heap->cant]);
+        void* dato = heap->datos[0];
+        heap->datos[0] = heap->datos[heap->cant];
+        heap->datos[heap->cant] = dato;
+        //_swap(heap->datos[0], heap->datos[heap->cant]);
         downheap(heap->datos, 0, heap->cmp, heap->cant);
     }
-    
     return desencolado;
 }
 
@@ -163,14 +167,17 @@ void heap_destruir(heap_t *heap, void (*destruir_elemento)(void *e)) {
  * le pase una función de comparación. Modifica el arreglo "in-place".
  * Nótese que esta función NO es formalmente parte del TAD Heap.
  */
-void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp);
+void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp) {
+    heap_t* heap = heap_crear_arr(elementos, cant, cmp);
+}
 
-/*
- * Constructor alternativo del heap. Además de la función de comparación,
- * recibe un arreglo de valores con que inicializar el heap. Complejidad
- * O(n).
- *
- * Excepto por la complejidad, es equivalente a crear un heap vacío y encolar
- * los valores de uno en uno
-*/
-heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp);
+
+heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp) {
+    heap_t* heap = heap_crear(cmp);
+
+    for (int i = 0; i < n; i++) {
+        heap_encolar(heap, arreglo[i]);
+    }
+
+    return heap;
+}

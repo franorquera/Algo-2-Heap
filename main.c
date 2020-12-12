@@ -13,7 +13,7 @@ void pruebas_heap_volumen_catedra(size_t, bool);
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("~~~ PRUEBAS ESTUDIANTE ~~~\n");
-        //pruebas_heap_estudiante();
+        pruebas_heap_estudiante();
     }
 
     #ifdef CORRECTOR
