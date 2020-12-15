@@ -117,19 +117,41 @@ void downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant) {
     }
 
     if (pos_hijo_der < cant) {
+        void* mayor = datos[pos_mayor];
         void* hijo_der = datos[pos_hijo_der];
-        if (cmp(padre, hijo_der) < 0) pos_mayor = pos_hijo_der;
+        if (cmp(mayor, hijo_der) < 0) pos_mayor = pos_hijo_der;
     }
 
     // SI HAY UN SOLO ELEM NO ENTRA ACA
     if (pos_mayor != pos_act) {
         void* dato = datos[pos_mayor];
-        datos[pos_mayor] = padre;
-        padre = dato;
+        datos[pos_mayor] = datos[pos_act];
+        datos[pos_act] = dato;
 
         //_swap(padre, datos[pos_mayor]);
         downheap(datos, pos_mayor, cmp, cant);
     }
+}
+
+void _downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant){
+    if (pos_act >= cant) return;
+
+    size_t pos_hijo_izq = _posiscion_hijo_izquierdo(pos_act);
+    size_t pos_hijo_der = _posiscion_hijo_derecho(pos_act);
+    size_t pos_final;
+
+    if(pos_hijo_izq < cant && pos_hijo_der < cant){
+        void* hijo_izq = datos[pos_hijo_izq];
+        void* hijo_der = datos[pos_hijo_der];
+        if(cmp(hijo_izq, hijo_der) > 0){
+            pos_final = pos_hijo_izq;
+
+        }else{
+            pos_final = pos_hijo_der;
+        }
+        
+    }
+
 }
 
 void *heap_desencolar(heap_t *heap) {
@@ -167,17 +189,30 @@ void heap_destruir(heap_t *heap, void (*destruir_elemento)(void *e)) {
  * le pase una función de comparación. Modifica el arreglo "in-place".
  * Nótese que esta función NO es formalmente parte del TAD Heap.
  */
+
 void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp) {
     heap_t* heap = heap_crear_arr(elementos, cant, cmp);
+
+    for(size_t i =0; i<cant; i++, cant--){
+        void* dato_aux = heap->datos[cant-1];
+        heap->datos[cant-1] = heap->datos[0];
+        heap->datos[0] = dato_aux;
+
+        downheap(heap->datos, 0, cmp, cant-1);
+    }
+    elementos = heap->datos;
+    heap_destruir(heap, NULL);
 }
 
 
 heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp) {
-    heap_t* heap = heap_crear(cmp);
-
-    for (int i = 0; i < n; i++) {
-        heap_encolar(heap, arreglo[i]);
+    for(int i = (int)n-1 ; i >= 0 ; i--){
+        downheap(arreglo, i,cmp, n);
     }
-
-    return heap;
+    heap_t* heap_aux = heap_crear(cmp);
+    for(int i=0; i<n;i++){
+        heap_aux->datos[i] = arreglo[i];
+        heap_aux->cant++;
+    }
+    return heap_aux;
 }
