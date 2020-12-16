@@ -30,6 +30,7 @@ void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp);
  * comparación.
  */
 
+
 /* Tipo utilizado para el heap. */
 typedef struct heap heap_t;
 

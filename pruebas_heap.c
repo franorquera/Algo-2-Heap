@@ -36,10 +36,10 @@ static void prueba_heap_insertar(void) {
     char* elem = "A"; 
     char* elem2 = "B";
     print_test("Prueba heap crear heap vacio", heap);
-    print_test("La heap esta vacia", heap_esta_vacio(heap));
+    print_test("El heap esta vacia", heap_esta_vacio(heap));
     print_test("No hay primer elemento", !heap_ver_max(heap));
     print_test("Encolo un elemento", heap_encolar(heap, &elem));
-    print_test("La heap no esta vacia", heap_esta_vacio(heap) == false);
+    print_test("El heap no esta vacia", heap_esta_vacio(heap) == false);
     print_test("Puedo ver el primer elemento", heap_ver_max(heap) == &elem);
     print_test("Encolo un segundo elemento", heap_encolar(heap, &elem2));
     print_test("Puedo ver el primer elemento", heap_ver_max(heap) == &elem2);
@@ -47,7 +47,7 @@ static void prueba_heap_insertar(void) {
     print_test("Puedo ver el nuevo primer elemento", heap_ver_max(heap) == &elem);
     print_test("Puedo desenheapr el nuevo primer elemento", heap_desencolar(heap) == &elem);
     print_test("No puedo desenheapr mas elementos", !heap_desencolar(heap));
-    print_test("La heap esta vacia", heap_esta_vacio(heap));
+    print_test("El heap esta vacia", heap_esta_vacio(heap));
     print_test("No hay primer elemento", !heap_ver_max(heap));
     heap_destruir(heap, NULL);
 }
@@ -65,7 +65,7 @@ static void prueba_heap_destruir_vectores() {
     *elem2 = "B";
 
     print_test("Prueba heap crear heap vacio", heap);
-    print_test("La heap esta vacia", heap_esta_vacio(heap));
+    print_test("El heap esta vacia", heap_esta_vacio(heap));
     print_test("Encolo un elemento", heap_encolar(heap, elem));
     print_test("Encolo un elemento", heap_encolar(heap, elem2));
     heap_destruir(heap, free);
@@ -100,7 +100,7 @@ static void prueba_heap_desde_arreglo(){
 }
 
 static void prueba_ordenar_arreglo(){
-    int nums_ordenados[8] = {10,6,5,4,1,2};
+    int nums_ordenados[8] = {1,2,4,5,6,10};
     int nums[6] = {6,1,5,4,10,2};
     void* arreglo[6] = { 0 };
     
@@ -116,14 +116,60 @@ static void prueba_ordenar_arreglo(){
             ok = false;
             break;
         }
-
     }
-    print_test("Prueba heap crear heap desde arreglo y desencolar los elementos", ok);
+    print_test("Prueba ordenar arreglo", ok);
 }
 
+/* Source: https://www.geeksforgeeks.org/bubble-sort/*/
+void swap(int *xp, int *yp) 
+{ 
+    int temp = *xp; 
+    *xp = *yp; 
+    *yp = temp; 
+} 
 
+void bubbleSort(int arr[], int n) 
+{ 
+   int i, j; 
+   for (i = 0; i < n-1; i++)       
+    
+       for (j = 0; j < n-i-1; j++)  
+           if (arr[j] > arr[j+1]) 
+              swap(&arr[j], &arr[j+1]); 
+} 
 
+static void pruebas_heap_volumen() {
+    heap_t* heap = heap_crear(numcmp);
+    
+    print_test("Prueba heap crear heap vacio", heap);
 
+    int valores[1000];
+
+    bool ok = true;
+    for (int i = 0; i < 1000;) {
+        unsigned clave = rand() % (1000 + 1 - 0) + 0;
+        valores[i] = clave;
+        int* pos = malloc(sizeof(int));
+        *pos = clave;
+        ok = heap_encolar(heap, pos);
+        if (!ok) break;
+        i++;
+    }
+
+    print_test("Prueba heap la cantidad de elementos es 1000", heap_cantidad(heap) == 1000);
+    bubbleSort(valores, 1000);
+
+    for (int i = 999; i >= 0; i--) {
+        void* desencolado = heap_desencolar(heap);
+        if ( *(int*) desencolado != valores[i]) {
+            ok = false;
+            break;
+        }
+        free(desencolado);
+    }
+    print_test("Desencola los elementos de forma correcta", ok);
+    heap_destruir(heap, free);
+}
 
 /* ******************************************************************
  *                        FUNCIÓN PRINCIPAL
@@ -135,4 +181,5 @@ void pruebas_heap_estudiante() {
     prueba_heap_destruir_vectores();
     prueba_heap_desde_arreglo();
     prueba_ordenar_arreglo();
+    pruebas_heap_volumen();
 }

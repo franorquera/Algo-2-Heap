@@ -57,11 +57,10 @@ void *heap_ver_max(const heap_t *heap) {
     return heap->datos[0];
 }
 
-
-void _swap(int *x, int *y) {
-   int k = *x;
-   *x = *y;
-   *y = k;
+void _swap(void* datos[], size_t x, size_t y) {
+   void* elem = datos[x];
+   datos[x] = datos[y];
+   datos[y] = elem;
 }
 
 void upheap(void** datos, size_t cant, cmp_func_t cmp) {
@@ -70,9 +69,7 @@ void upheap(void** datos, size_t cant, cmp_func_t cmp) {
     size_t pos_padre = _posiscion_padre(cant);
     void* padre = datos[pos_padre];
     if (cmp(padre, datos[cant]) < 0) {
-        datos[pos_padre] = datos[cant];
-        datos[cant] = padre;
-        //_swap(padre, datos[cant]);
+        _swap(datos, pos_padre, cant);
         upheap(datos, pos_padre, cmp); 
     }
     return;
@@ -108,7 +105,7 @@ void downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant) {
     size_t pos_hijo_izq = _posiscion_hijo_izquierdo(pos_act);
     size_t pos_hijo_der = _posiscion_hijo_derecho(pos_act);
 
-    size_t pos_mayor = pos_act; // es 0
+    size_t pos_mayor = pos_act;
     void* padre = datos[pos_mayor];
 
     if (pos_hijo_izq < cant) {
@@ -122,36 +119,10 @@ void downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant) {
         if (cmp(mayor, hijo_der) < 0) pos_mayor = pos_hijo_der;
     }
 
-    // SI HAY UN SOLO ELEM NO ENTRA ACA
     if (pos_mayor != pos_act) {
-        void* dato = datos[pos_mayor];
-        datos[pos_mayor] = datos[pos_act];
-        datos[pos_act] = dato;
-
-        //_swap(padre, datos[pos_mayor]);
+        _swap(datos, pos_mayor, pos_act);
         downheap(datos, pos_mayor, cmp, cant);
     }
-}
-
-void _downheap(void** datos, size_t pos_act, cmp_func_t cmp, size_t cant){
-    if (pos_act >= cant) return;
-
-    size_t pos_hijo_izq = _posiscion_hijo_izquierdo(pos_act);
-    size_t pos_hijo_der = _posiscion_hijo_derecho(pos_act);
-    size_t pos_final;
-
-    if(pos_hijo_izq < cant && pos_hijo_der < cant){
-        void* hijo_izq = datos[pos_hijo_izq];
-        void* hijo_der = datos[pos_hijo_der];
-        if(cmp(hijo_izq, hijo_der) > 0){
-            pos_final = pos_hijo_izq;
-
-        }else{
-            pos_final = pos_hijo_der;
-        }
-        
-    }
-
 }
 
 void *heap_desencolar(heap_t *heap) {
@@ -166,10 +137,7 @@ void *heap_desencolar(heap_t *heap) {
     heap->cant--;
 
     if (!heap_esta_vacio(heap)) {
-        void* dato = heap->datos[0];
-        heap->datos[0] = heap->datos[heap->cant];
-        heap->datos[heap->cant] = dato;
-        //_swap(heap->datos[0], heap->datos[heap->cant]);
+        _swap(heap->datos, 0, heap->cant);
         downheap(heap->datos, 0, heap->cmp, heap->cant);
     }
     return desencolado;
@@ -184,33 +152,27 @@ void heap_destruir(heap_t *heap, void (*destruir_elemento)(void *e)) {
     free(heap);
 }
 
-/* Función de heapsort genérica. Esta función ordena mediante heap_sort
- * un arreglo de punteros opacos, para lo cual requiere que se
- * le pase una función de comparación. Modifica el arreglo "in-place".
- * Nótese que esta función NO es formalmente parte del TAD Heap.
- */
-
-void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp) {
-    heap_t* heap = heap_crear_arr(elementos, cant, cmp);
-
-    for(size_t i =0; i<cant; i++, cant--){
-        void* dato_aux = heap->datos[cant-1];
-        heap->datos[cant-1] = heap->datos[0];
-        heap->datos[0] = dato_aux;
-
-        downheap(heap->datos, 0, cmp, cant-1);
+void _heapify(void* elementos[], size_t cant, cmp_func_t cmp) {
+    size_t cant_total = cant;
+    for (; cant > 0; cant--) {
+        downheap(elementos, cant - 1, cmp, cant_total - 1);
     }
-    elementos = heap->datos;
-    heap_destruir(heap, NULL);
 }
 
+void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp) {
+    _heapify(elementos, cant, cmp);
+
+    for (; cant > 0; cant--) {
+        _swap(elementos, 0, cant - 1);
+        downheap(elementos, 0, cmp, cant - 1);
+    }
+}
 
 heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp) {
-    for(int i = (int)n-1 ; i >= 0 ; i--){
-        downheap(arreglo, i,cmp, n);
-    }
+    _heapify(arreglo, n, cmp);
+
     heap_t* heap_aux = heap_crear(cmp);
-    for(int i=0; i<n;i++){
+    for(int i = 0; i < n; i++){
         heap_aux->datos[i] = arreglo[i];
         heap_aux->cant++;
     }
