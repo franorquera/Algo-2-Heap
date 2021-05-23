@@ -9,6 +9,25 @@
 /* ******************************************************************
  *                        PRUEBAS UNITARIAS
  * *****************************************************************/
+
+/* Source: https://www.geeksforgeeks.org/bubble-sort/*/
+void swap(int *xp, int *yp) 
+{ 
+    int temp = *xp; 
+    *xp = *yp; 
+    *yp = temp; 
+} 
+
+void bubbleSort(int arr[], int n) 
+{ 
+   int i, j; 
+   for (i = 0; i < n-1; i++)       
+    
+       for (j = 0; j < n-i-1; j++)  
+           if (arr[j] > arr[j+1]) 
+              swap(&arr[j], &arr[j+1]); 
+} 
+
 int charcmp(const void* a, const void* b){
     char* a_aux = (char*)a;
     char* b_aux = (char*)b;
@@ -73,20 +92,22 @@ static void prueba_heap_destruir_vectores() {
 
 
 static void prueba_heap_desde_arreglo(){
-    int nums_ordenados[8] = {9,8,7,5,4,4,3,2};
+    int nums_ordenados[50] = {5,6,7,4,3,2,44,6,7,8,9,0,8,7,6,453,5,6,31,7,6,4,2,7,98,4,3,5,7,865,4,3,2,1,4,6,8,7,5,4,31,3,4,5,6,6,7,0,2,8};
+    bubbleSort(nums_ordenados, 50);
+    int muchos_nums[50] = {5,6,7,4,3,2,44,6,7,8,9,0,8,7,6,453,5,6,31,7,6,4,2,7,98,4,3,5,7,865,4,3,2,1,4,6,8,7,5,4,31,3,4,5,6,6,7,0,2,8}; 
 
-    int nums[8] = {4,2,7,9,4,3,8,5};
-    void* arreglo[8] = { 0 };
+    void** arreglo = malloc(sizeof(void*) * 50);
     
-    for(int i = 0; i< 8; i++){
-        arreglo[i] = &nums[i];
+    for(int i = 0; i< 50; i++){
+        arreglo[i] = &muchos_nums[i];
     }
-    heap_t* heap = heap_crear_arr(arreglo,8,numcmp);
+    heap_t* heap = heap_crear_arr(arreglo,50,numcmp);
+    free(arreglo);
     
 
     bool ok = true;
 
-    for(int i = 0; i<8; i++){
+    for(int i = 49; i >= 0; i--){
         void* desencolado = heap_desencolar(heap);
         if(*(int*)desencolado != nums_ordenados[i]){
             ok = false;
@@ -119,24 +140,6 @@ static void prueba_ordenar_arreglo(){
     }
     print_test("Prueba ordenar arreglo", ok);
 }
-
-/* Source: https://www.geeksforgeeks.org/bubble-sort/*/
-void swap(int *xp, int *yp) 
-{ 
-    int temp = *xp; 
-    *xp = *yp; 
-    *yp = temp; 
-} 
-
-void bubbleSort(int arr[], int n) 
-{ 
-   int i, j; 
-   for (i = 0; i < n-1; i++)       
-    
-       for (j = 0; j < n-i-1; j++)  
-           if (arr[j] > arr[j+1]) 
-              swap(&arr[j], &arr[j+1]); 
-} 
 
 static void pruebas_heap_volumen() {
     heap_t* heap = heap_crear(numcmp);
@@ -183,3 +186,12 @@ void pruebas_heap_estudiante() {
     prueba_ordenar_arreglo();
     pruebas_heap_volumen();
 }
+
+#ifndef CORRECTOR
+
+int main(void) {
+    pruebas_heap_estudiante();
+    return failure_count() > 0;
+}
+
+#endif

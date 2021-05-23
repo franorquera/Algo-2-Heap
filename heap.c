@@ -169,12 +169,16 @@ void heap_sort(void *elementos[], size_t cant, cmp_func_t cmp) {
 }
 
 heap_t *heap_crear_arr(void *arreglo[], size_t n, cmp_func_t cmp) {
-    _heapify(arreglo, n, cmp);
-
     heap_t* heap_aux = heap_crear(cmp);
+
+    void** nuevos_datos = malloc(sizeof(void*) * n * 2);
+    free(heap_aux->datos);
+
     for(int i = 0; i < n; i++){
-        heap_aux->datos[i] = arreglo[i];
+        nuevos_datos[i] = arreglo[i];
         heap_aux->cant++;
     }
+    heap_aux->datos = nuevos_datos;
+    _heapify(heap_aux->datos, n, cmp);
     return heap_aux;
 }
